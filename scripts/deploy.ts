@@ -1,5 +1,6 @@
 import { ethers, waffle } from "hardhat";
 import fs from "fs";
+const hre = require("hardhat");
 
 const config = {
   mainnet: {
@@ -7,6 +8,10 @@ const config = {
   },
   rinkeby: {
     WETH_ADDRESS: "0xc778417e063141139fce010982780140aa0cd5ab",
+  },
+  polygonMumbai: {
+    //TST ERC20 Token on testnet
+    WETH_ADDRESS: "0x2d7882bedcbfddce29ba99965dd3cdf7fcb10a1e",
   },
   hardhat: {
     // Note: This won't integrate, but will allow us to test deploys.
@@ -19,6 +24,7 @@ const NETWORK_MAP = {
   "4": "rinkeby",
   "1337": "hardhat",
   "31337": "hardhat",
+  "80001": "polygonMumbai",
 };
 
 let isLocal = false;
@@ -37,6 +43,7 @@ async function main() {
   const splitter = await Splitter.deploy();
   await splitter.deployed();
 
+
   const SplitFactory = await ethers.getContractFactory("SplitFactory");
   const splitFactory = await SplitFactory.deploy(
     splitter.address,
@@ -52,6 +59,7 @@ async function main() {
   };
 
   console.log(info);
+  
 
   if (!isLocal) {
     fs.writeFileSync(
@@ -59,6 +67,25 @@ async function main() {
       JSON.stringify(info, null, 2)
     );
   }
+
+
+  setTimeout(async ()=>{
+    await hre.run("verify:verify", {
+      address: splitter.address,
+      constructorArguments: [],
+    });
+  
+    await hre.run("verify:verify", {
+      address: splitFactory.address,
+      constructorArguments: [
+        splitter.address,
+        WETH_ADDRESS
+      ],
+    });
+  
+  }, 10000);
+
+  
 }
 
 main()

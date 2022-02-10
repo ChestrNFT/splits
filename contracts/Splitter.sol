@@ -41,6 +41,7 @@ contract Splitter is SplitStorage {
 
     function claimForAllWindows(
         address account,
+        uint32 tokenId,
         uint256 percentageAllocation,
         bytes32[] calldata merkleProof
     ) external {
@@ -49,15 +50,15 @@ contract Splitter is SplitStorage {
             verifyProof(
                 merkleProof,
                 merkleRoot,
-                getNode(account, percentageAllocation)
+                getNode(account, tokenId, percentageAllocation)
             ),
             "Invalid proof"
         );
 
         uint256 amount = 0;
         for (uint256 i = 0; i < currentWindow; i++) {
-            if (!isClaimed(i, account)) {
-                setClaimed(i, account);
+            if (!isClaimed(i, account,tokenId)) {
+                setClaimed(i, account,tokenId);
 
                 amount += scaleAmountByPercentage(
                     balanceForWindow[i],
@@ -69,12 +70,12 @@ contract Splitter is SplitStorage {
         transferETHOrWETH(account, amount);
     }
 
-    function getNode(address account, uint256 percentageAllocation)
+    function getNode(address account, uint32 tokenId, uint256 percentageAllocation)
         private
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encodePacked(account, percentageAllocation));
+        return keccak256(abi.encodePacked(account, tokenId, percentageAllocation));
     }
 
     function scaleAmountByPercentage(uint256 amount, uint256 scaledPercent)
@@ -97,22 +98,23 @@ contract Splitter is SplitStorage {
     function claim(
         uint256 window,
         address account,
+        uint32 tokenId,
         uint256 scaledPercentageAllocation,
         bytes32[] calldata merkleProof
     ) external {
         require(currentWindow > window, "cannot claim for a future window");
         require(
-            !isClaimed(window, account),
+            !isClaimed(window, account, tokenId),
             "Account already claimed the given window"
         );
 
-        setClaimed(window, account);
+        setClaimed(window, account, tokenId);
 
         require(
             verifyProof(
                 merkleProof,
                 merkleRoot,
-                getNode(account, scaledPercentageAllocation)
+                getNode(account, tokenId, scaledPercentageAllocation)
             ),
             "Invalid proof"
         );
@@ -145,26 +147,26 @@ contract Splitter is SplitStorage {
         emit WindowIncremented(currentWindow, fundsAvailable);
     }
 
-    function isClaimed(uint256 window, address account)
+    function isClaimed(uint256 window, address account, uint32 tokenId)
         public
         view
         returns (bool)
     {
-        return claimed[getClaimHash(window, account)];
+        return claimed[getClaimHash(window, account,tokenId)];
     }
 
     //======== Private Functions ========
 
-    function setClaimed(uint256 window, address account) private {
-        claimed[getClaimHash(window, account)] = true;
+    function setClaimed(uint256 window, address account, uint32 tokenId) private {
+        claimed[getClaimHash(window, account, tokenId)] = true;
     }
 
-    function getClaimHash(uint256 window, address account)
+    function getClaimHash(uint256 window, address account, uint32 tokenId)
         private
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encodePacked(window, account));
+        return keccak256(abi.encodePacked(window, account, tokenId));
     }
 
     function amountFromPercent(uint256 amount, uint32 percent)

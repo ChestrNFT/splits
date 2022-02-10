@@ -3,6 +3,7 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-solhint';
 import 'hardhat-typechain';
+import "@nomiclabs/hardhat-etherscan";
 
 const { alchemyAPIKey, deployerPrivateKey } = require('./env.json');
 
@@ -30,6 +31,23 @@ const config: HardhatUserConfig = {
       url: `https://eth-mainnet.alchemyapi.io/v2/${alchemyAPIKey}`,
       accounts: [deployerPrivateKey],
     },
+    polygonMumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${alchemyAPIKey}`,
+      accounts: [deployerPrivateKey],
+    },
+  },
+  etherscan: {
+    apiKey: {
+        mainnet: "YOUR_ETHERSCAN_API_KEY",
+        ropsten: "YOUR_ETHERSCAN_API_KEY",
+        rinkeby: "YOUR_ETHERSCAN_API_KEY",
+        goerli: "YOUR_ETHERSCAN_API_KEY",
+        kovan: "YOUR_ETHERSCAN_API_KEY",
+       
+        // polygon
+        polygon: "5GT5IQNDSN2FNJ56KSZNXJ97B3E7Z4K4GW",
+        polygonMumbai: "5GT5IQNDSN2FNJ56KSZNXJ97B3E7Z4K4GW",
+    }
   }
 };
 

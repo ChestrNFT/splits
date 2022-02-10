@@ -32,7 +32,7 @@ const NULL_BYTES =
 describe("SplitProxy via Factory", () => {
   describe("basic test", () => {
     let proxy, callableProxy;
-    let funder, fakeWETH, account1, account2, transactionHandler;
+    let funder, fakeWETH, account1, account2,tokenId=1, transactionHandler;
     let tree;
 
     describe("when there is a 50-50 allocation", () => {
@@ -51,6 +51,7 @@ describe("SplitProxy via Factory", () => {
         const allocations = allocationPercentages.map((percentage, index) => {
           return {
             account: claimers[index].address,
+            tokenId,
             allocation: BigNumber.from(percentage),
           };
         });
@@ -107,14 +108,14 @@ describe("SplitProxy via Factory", () => {
             const window = 0;
             const account = account1.address;
             allocation = BigNumber.from("50000000");
-            const proof = tree.getProof(account, allocation);
+            const proof = tree.getProof(account,tokenId, allocation);
             const accountBalanceBefore = await waffle.provider.getBalance(
               account
             );
 
             claimTx = await callableProxy
               .connect(transactionHandler)
-              .claim(window, account, allocation, proof);
+              .claim(window, account,tokenId, allocation, proof);
 
             const accountBalanceAfter = await waffle.provider.getBalance(
               account
@@ -144,9 +145,9 @@ describe("SplitProxy via Factory", () => {
             );
           });
 
-          it("costs 60982 gas", async () => {
+          it("costs 72290 gas", async () => {
             const { gasUsed } = await claimTx.wait();
-            expect(gasUsed.toString()).to.eq("60982");
+            expect(gasUsed.toString()).to.eq("72290");
           });
 
           describe("and another 1 ETH is added, and the window is incremented", () => {
@@ -166,14 +167,14 @@ describe("SplitProxy via Factory", () => {
                 const window = 1;
                 const account = account2.address;
                 const allocation = BigNumber.from("50000000");
-                const proof = tree.getProof(account, allocation);
+                const proof = tree.getProof(account,tokenId, allocation);
                 const accountBalanceBefore = await waffle.provider.getBalance(
                   account
                 );
 
                 await callableProxy
                   .connect(transactionHandler)
-                  .claim(window, account, allocation, proof);
+                  .claim(window, account,tokenId, allocation, proof);
 
                 const accountBalanceAfter = await waffle.provider.getBalance(
                   account
@@ -198,14 +199,14 @@ describe("SplitProxy via Factory", () => {
                 const window = 0;
                 const account = account2.address;
                 const allocation = BigNumber.from("50000000");
-                const proof = tree.getProof(account, allocation);
+                const proof = tree.getProof(account,tokenId, allocation);
                 const accountBalanceBefore = await waffle.provider.getBalance(
                   account
                 );
 
                 await callableProxy
                   .connect(transactionHandler)
-                  .claim(window, account, allocation, proof);
+                  .claim(window, account, tokenId, allocation, proof);
 
                 const accountBalanceAfter = await waffle.provider.getBalance(
                   account
@@ -230,14 +231,14 @@ describe("SplitProxy via Factory", () => {
                 const window = 1;
                 const account = account1.address;
                 const allocation = BigNumber.from("50000000");
-                const proof = tree.getProof(account, allocation);
+                const proof = tree.getProof(account,tokenId, allocation);
                 const accountBalanceBefore = await waffle.provider.getBalance(
                   account
                 );
 
                 await callableProxy
                   .connect(transactionHandler)
-                  .claim(window, account, allocation, proof);
+                  .claim(window, account, tokenId, allocation, proof);
 
                 const accountBalanceAfter = await waffle.provider.getBalance(
                   account
