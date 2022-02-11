@@ -11,6 +11,10 @@ interface IERC20 {
         returns (bool);
 }
 
+interface IERC721 {
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+}
+
 interface IWETH {
     function deposit() external payable;
 
@@ -56,6 +60,9 @@ contract Splitter is SplitStorage {
         );
 
         uint256 amount = 0;
+
+        require(IERC721(account).ownerOf(tokenId)==msg.sender,"Invalid Membership");
+        
         for (uint256 i = 0; i < currentWindow; i++) {
             if (!isClaimed(i, account,tokenId)) {
                 setClaimed(i, account,tokenId);
@@ -119,8 +126,10 @@ contract Splitter is SplitStorage {
             "Invalid proof"
         );
 
+        require(IERC721(account).ownerOf(tokenId)==msg.sender,"Invalid Membership");
+
         transferETHOrWETH(
-            account,
+            msg.sender,
             // The absolute amount that's claimable.
             scaleAmountByPercentage(
                 balanceForWindow[window],

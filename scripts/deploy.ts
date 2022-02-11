@@ -39,6 +39,11 @@ async function main() {
 
   const { WETH_ADDRESS } = config[networkName];
 
+
+  const MyNft = await ethers.getContractFactory("MyNFT");
+  const myNFT = await MyNft.deploy();
+  await myNFT.deployed();
+
   const Splitter = await ethers.getContractFactory("Splitter");
   const splitter = await Splitter.deploy();
   await splitter.deployed();
@@ -55,6 +60,7 @@ async function main() {
     Contracts: {
       Splitter: splitter.address,
       SplitFactory: splitFactory.address,
+      MyNFT: myNFT.address,
     },
   };
 
@@ -70,6 +76,11 @@ async function main() {
 
 
   setTimeout(async ()=>{
+    await hre.run("verify:verify", {
+      address: myNFT.address,
+      constructorArguments: [],
+    });
+    
     await hre.run("verify:verify", {
       address: splitter.address,
       constructorArguments: [],
