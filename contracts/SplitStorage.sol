@@ -13,4 +13,5 @@ contract SplitStorage {
     uint256[] public balanceForWindow;
     mapping(bytes32 => bool) internal claimed;
     uint256 internal depositedInWindow;
+    address public membershipContract;
 }

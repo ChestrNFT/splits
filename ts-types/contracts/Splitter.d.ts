@@ -22,17 +22,23 @@ import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 
 interface SplitterInterface extends ethers.utils.Interface {
   functions: {
+    "IID_IROYALTY()": FunctionFragment;
     "PERCENTAGE_SCALE()": FunctionFragment;
     "balanceForWindow(uint256)": FunctionFragment;
-    "claim(uint256,address,uint32,uint256,bytes32[])": FunctionFragment;
-    "claimForAllWindows(address,uint32,uint256,bytes32[])": FunctionFragment;
+    "claim(uint256,uint32,uint256,bytes32[])": FunctionFragment;
+    "claimForAllWindows(uint32,uint256,bytes32[])": FunctionFragment;
     "currentWindow()": FunctionFragment;
-    "incrementWindow()": FunctionFragment;
+    "incrementWindow(uint256)": FunctionFragment;
     "isClaimed(uint256,address,uint32)": FunctionFragment;
+    "membershipContract()": FunctionFragment;
     "merkleRoot()": FunctionFragment;
     "scaleAmountByPercentage(uint256,uint256)": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "IID_IROYALTY",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "PERCENTAGE_SCALE",
     values?: undefined
@@ -43,11 +49,11 @@ interface SplitterInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "claim",
-    values: [BigNumberish, string, BigNumberish, BigNumberish, BytesLike[]]
+    values: [BigNumberish, BigNumberish, BigNumberish, BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "claimForAllWindows",
-    values: [string, BigNumberish, BigNumberish, BytesLike[]]
+    values: [BigNumberish, BigNumberish, BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "currentWindow",
@@ -55,11 +61,15 @@ interface SplitterInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "incrementWindow",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "isClaimed",
     values: [BigNumberish, string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "membershipContract",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "merkleRoot",
@@ -70,6 +80,10 @@ interface SplitterInterface extends ethers.utils.Interface {
     values: [BigNumberish, BigNumberish]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "IID_IROYALTY",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "PERCENTAGE_SCALE",
     data: BytesLike
@@ -92,6 +106,10 @@ interface SplitterInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "isClaimed", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "membershipContract",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "merkleRoot", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "scaleAmountByPercentage",
@@ -121,6 +139,10 @@ export class Splitter extends Contract {
   interface: SplitterInterface;
 
   functions: {
+    IID_IROYALTY(overrides?: CallOverrides): Promise<[string]>;
+
+    "IID_IROYALTY()"(overrides?: CallOverrides): Promise<[string]>;
+
     PERCENTAGE_SCALE(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     "PERCENTAGE_SCALE()"(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -137,16 +159,14 @@ export class Splitter extends Contract {
 
     claim(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "claim(uint256,address,uint32,uint256,bytes32[])"(
+    "claim(uint256,uint32,uint256,bytes32[])"(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -154,15 +174,13 @@ export class Splitter extends Contract {
     ): Promise<ContractTransaction>;
 
     claimForAllWindows(
-      account: string,
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
-    "claimForAllWindows(address,uint32,uint256,bytes32[])"(
-      account: string,
+    "claimForAllWindows(uint32,uint256,bytes32[])"(
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -173,23 +191,33 @@ export class Splitter extends Contract {
 
     "currentWindow()"(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    incrementWindow(overrides?: Overrides): Promise<ContractTransaction>;
+    incrementWindow(
+      royaltyAmount: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
 
-    "incrementWindow()"(overrides?: Overrides): Promise<ContractTransaction>;
+    "incrementWindow(uint256)"(
+      royaltyAmount: BigNumberish,
+      overrides?: Overrides
+    ): Promise<ContractTransaction>;
 
     isClaimed(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     "isClaimed(uint256,address,uint32)"(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
+
+    membershipContract(overrides?: CallOverrides): Promise<[string]>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<[string]>;
 
     merkleRoot(overrides?: CallOverrides): Promise<[string]>;
 
@@ -208,6 +236,10 @@ export class Splitter extends Contract {
     ): Promise<[BigNumber] & { scaledAmount: BigNumber }>;
   };
 
+  IID_IROYALTY(overrides?: CallOverrides): Promise<string>;
+
+  "IID_IROYALTY()"(overrides?: CallOverrides): Promise<string>;
+
   PERCENTAGE_SCALE(overrides?: CallOverrides): Promise<BigNumber>;
 
   "PERCENTAGE_SCALE()"(overrides?: CallOverrides): Promise<BigNumber>;
@@ -224,16 +256,14 @@ export class Splitter extends Contract {
 
   claim(
     window: BigNumberish,
-    account: string,
     tokenId: BigNumberish,
     scaledPercentageAllocation: BigNumberish,
     merkleProof: BytesLike[],
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "claim(uint256,address,uint32,uint256,bytes32[])"(
+  "claim(uint256,uint32,uint256,bytes32[])"(
     window: BigNumberish,
-    account: string,
     tokenId: BigNumberish,
     scaledPercentageAllocation: BigNumberish,
     merkleProof: BytesLike[],
@@ -241,15 +271,13 @@ export class Splitter extends Contract {
   ): Promise<ContractTransaction>;
 
   claimForAllWindows(
-    account: string,
     tokenId: BigNumberish,
     percentageAllocation: BigNumberish,
     merkleProof: BytesLike[],
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
-  "claimForAllWindows(address,uint32,uint256,bytes32[])"(
-    account: string,
+  "claimForAllWindows(uint32,uint256,bytes32[])"(
     tokenId: BigNumberish,
     percentageAllocation: BigNumberish,
     merkleProof: BytesLike[],
@@ -260,23 +288,33 @@ export class Splitter extends Contract {
 
   "currentWindow()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-  incrementWindow(overrides?: Overrides): Promise<ContractTransaction>;
+  incrementWindow(
+    royaltyAmount: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
 
-  "incrementWindow()"(overrides?: Overrides): Promise<ContractTransaction>;
+  "incrementWindow(uint256)"(
+    royaltyAmount: BigNumberish,
+    overrides?: Overrides
+  ): Promise<ContractTransaction>;
 
   isClaimed(
     window: BigNumberish,
-    account: string,
+    membershipContract: string,
     tokenId: BigNumberish,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
   "isClaimed(uint256,address,uint32)"(
     window: BigNumberish,
-    account: string,
+    membershipContract: string,
     tokenId: BigNumberish,
     overrides?: CallOverrides
   ): Promise<boolean>;
+
+  membershipContract(overrides?: CallOverrides): Promise<string>;
+
+  "membershipContract()"(overrides?: CallOverrides): Promise<string>;
 
   merkleRoot(overrides?: CallOverrides): Promise<string>;
 
@@ -295,6 +333,10 @@ export class Splitter extends Contract {
   ): Promise<BigNumber>;
 
   callStatic: {
+    IID_IROYALTY(overrides?: CallOverrides): Promise<string>;
+
+    "IID_IROYALTY()"(overrides?: CallOverrides): Promise<string>;
+
     PERCENTAGE_SCALE(overrides?: CallOverrides): Promise<BigNumber>;
 
     "PERCENTAGE_SCALE()"(overrides?: CallOverrides): Promise<BigNumber>;
@@ -311,16 +353,14 @@ export class Splitter extends Contract {
 
     claim(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: CallOverrides
     ): Promise<void>;
 
-    "claim(uint256,address,uint32,uint256,bytes32[])"(
+    "claim(uint256,uint32,uint256,bytes32[])"(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -328,15 +368,13 @@ export class Splitter extends Contract {
     ): Promise<void>;
 
     claimForAllWindows(
-      account: string,
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: CallOverrides
     ): Promise<void>;
 
-    "claimForAllWindows(address,uint32,uint256,bytes32[])"(
-      account: string,
+    "claimForAllWindows(uint32,uint256,bytes32[])"(
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -347,23 +385,33 @@ export class Splitter extends Contract {
 
     "currentWindow()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    incrementWindow(overrides?: CallOverrides): Promise<void>;
+    incrementWindow(
+      royaltyAmount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
-    "incrementWindow()"(overrides?: CallOverrides): Promise<void>;
+    "incrementWindow(uint256)"(
+      royaltyAmount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     isClaimed(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     "isClaimed(uint256,address,uint32)"(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    membershipContract(overrides?: CallOverrides): Promise<string>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<string>;
 
     merkleRoot(overrides?: CallOverrides): Promise<string>;
 
@@ -389,6 +437,10 @@ export class Splitter extends Contract {
   };
 
   estimateGas: {
+    IID_IROYALTY(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "IID_IROYALTY()"(overrides?: CallOverrides): Promise<BigNumber>;
+
     PERCENTAGE_SCALE(overrides?: CallOverrides): Promise<BigNumber>;
 
     "PERCENTAGE_SCALE()"(overrides?: CallOverrides): Promise<BigNumber>;
@@ -405,16 +457,14 @@ export class Splitter extends Contract {
 
     claim(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "claim(uint256,address,uint32,uint256,bytes32[])"(
+    "claim(uint256,uint32,uint256,bytes32[])"(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -422,15 +472,13 @@ export class Splitter extends Contract {
     ): Promise<BigNumber>;
 
     claimForAllWindows(
-      account: string,
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: Overrides
     ): Promise<BigNumber>;
 
-    "claimForAllWindows(address,uint32,uint256,bytes32[])"(
-      account: string,
+    "claimForAllWindows(uint32,uint256,bytes32[])"(
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -441,23 +489,33 @@ export class Splitter extends Contract {
 
     "currentWindow()"(overrides?: CallOverrides): Promise<BigNumber>;
 
-    incrementWindow(overrides?: Overrides): Promise<BigNumber>;
+    incrementWindow(
+      royaltyAmount: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
 
-    "incrementWindow()"(overrides?: Overrides): Promise<BigNumber>;
+    "incrementWindow(uint256)"(
+      royaltyAmount: BigNumberish,
+      overrides?: Overrides
+    ): Promise<BigNumber>;
 
     isClaimed(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     "isClaimed(uint256,address,uint32)"(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    membershipContract(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<BigNumber>;
 
     merkleRoot(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -477,6 +535,10 @@ export class Splitter extends Contract {
   };
 
   populateTransaction: {
+    IID_IROYALTY(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    "IID_IROYALTY()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     PERCENTAGE_SCALE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     "PERCENTAGE_SCALE()"(
@@ -495,16 +557,14 @@ export class Splitter extends Contract {
 
     claim(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "claim(uint256,address,uint32,uint256,bytes32[])"(
+    "claim(uint256,uint32,uint256,bytes32[])"(
       window: BigNumberish,
-      account: string,
       tokenId: BigNumberish,
       scaledPercentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -512,15 +572,13 @@ export class Splitter extends Contract {
     ): Promise<PopulatedTransaction>;
 
     claimForAllWindows(
-      account: string,
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
       overrides?: Overrides
     ): Promise<PopulatedTransaction>;
 
-    "claimForAllWindows(address,uint32,uint256,bytes32[])"(
-      account: string,
+    "claimForAllWindows(uint32,uint256,bytes32[])"(
       tokenId: BigNumberish,
       percentageAllocation: BigNumberish,
       merkleProof: BytesLike[],
@@ -531,21 +589,35 @@ export class Splitter extends Contract {
 
     "currentWindow()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    incrementWindow(overrides?: Overrides): Promise<PopulatedTransaction>;
+    incrementWindow(
+      royaltyAmount: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
 
-    "incrementWindow()"(overrides?: Overrides): Promise<PopulatedTransaction>;
+    "incrementWindow(uint256)"(
+      royaltyAmount: BigNumberish,
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
 
     isClaimed(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     "isClaimed(uint256,address,uint32)"(
       window: BigNumberish,
-      account: string,
+      membershipContract: string,
       tokenId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    membershipContract(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "membershipContract()"(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

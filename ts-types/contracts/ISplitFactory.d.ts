@@ -22,11 +22,16 @@ import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 
 interface ISplitFactoryInterface extends ethers.utils.Interface {
   functions: {
+    "membershipContract()": FunctionFragment;
     "merkleRoot()": FunctionFragment;
     "splitter()": FunctionFragment;
     "wethAddress()": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "membershipContract",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "merkleRoot",
     values?: undefined
@@ -37,6 +42,10 @@ interface ISplitFactoryInterface extends ethers.utils.Interface {
     values?: undefined
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "membershipContract",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "merkleRoot", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "splitter", data: BytesLike): Result;
   decodeFunctionResult(
@@ -61,6 +70,10 @@ export class ISplitFactory extends Contract {
   interface: ISplitFactoryInterface;
 
   functions: {
+    membershipContract(overrides?: Overrides): Promise<ContractTransaction>;
+
+    "membershipContract()"(overrides?: Overrides): Promise<ContractTransaction>;
+
     merkleRoot(overrides?: Overrides): Promise<ContractTransaction>;
 
     "merkleRoot()"(overrides?: Overrides): Promise<ContractTransaction>;
@@ -73,6 +86,10 @@ export class ISplitFactory extends Contract {
 
     "wethAddress()"(overrides?: Overrides): Promise<ContractTransaction>;
   };
+
+  membershipContract(overrides?: Overrides): Promise<ContractTransaction>;
+
+  "membershipContract()"(overrides?: Overrides): Promise<ContractTransaction>;
 
   merkleRoot(overrides?: Overrides): Promise<ContractTransaction>;
 
@@ -87,6 +104,10 @@ export class ISplitFactory extends Contract {
   "wethAddress()"(overrides?: Overrides): Promise<ContractTransaction>;
 
   callStatic: {
+    membershipContract(overrides?: CallOverrides): Promise<string>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<string>;
+
     merkleRoot(overrides?: CallOverrides): Promise<string>;
 
     "merkleRoot()"(overrides?: CallOverrides): Promise<string>;
@@ -103,6 +124,10 @@ export class ISplitFactory extends Contract {
   filters: {};
 
   estimateGas: {
+    membershipContract(overrides?: Overrides): Promise<BigNumber>;
+
+    "membershipContract()"(overrides?: Overrides): Promise<BigNumber>;
+
     merkleRoot(overrides?: Overrides): Promise<BigNumber>;
 
     "merkleRoot()"(overrides?: Overrides): Promise<BigNumber>;
@@ -117,6 +142,12 @@ export class ISplitFactory extends Contract {
   };
 
   populateTransaction: {
+    membershipContract(overrides?: Overrides): Promise<PopulatedTransaction>;
+
+    "membershipContract()"(
+      overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
     merkleRoot(overrides?: Overrides): Promise<PopulatedTransaction>;
 
     "merkleRoot()"(overrides?: Overrides): Promise<PopulatedTransaction>;

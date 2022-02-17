@@ -6,6 +6,8 @@ import {SplitStorage} from "./SplitStorage.sol";
 interface ISplitFactory {
     function splitter() external returns (address);
 
+    function membershipContract() external returns (address);
+
     function wethAddress() external returns (address);
 
     function merkleRoot() external returns (bytes32);
@@ -18,6 +20,7 @@ interface ISplitFactory {
 contract SplitProxy is SplitStorage {
     constructor() {
         _splitter = ISplitFactory(msg.sender).splitter();
+        membershipContract = ISplitFactory(msg.sender).membershipContract();
         wethAddress = ISplitFactory(msg.sender).wethAddress();
         merkleRoot = ISplitFactory(msg.sender).merkleRoot();
     }
@@ -44,9 +47,13 @@ contract SplitProxy is SplitStorage {
     function splitter() public view returns (address) {
         return _splitter;
     }
+    
+    function getMembershipContract() public view returns (address) {
+        return membershipContract;
+    }
 
     // Plain ETH transfers.
     receive() external payable {
-        depositedInWindow += msg.value;
+        //depositedInWindow += msg.value;
     }
 }

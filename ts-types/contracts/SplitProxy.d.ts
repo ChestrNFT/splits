@@ -23,6 +23,8 @@ interface SplitProxyInterface extends ethers.utils.Interface {
   functions: {
     "balanceForWindow(uint256)": FunctionFragment;
     "currentWindow()": FunctionFragment;
+    "getMembershipContract()": FunctionFragment;
+    "membershipContract()": FunctionFragment;
     "merkleRoot()": FunctionFragment;
     "splitter()": FunctionFragment;
   };
@@ -33,6 +35,14 @@ interface SplitProxyInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "currentWindow",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getMembershipContract",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "membershipContract",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -47,6 +57,14 @@ interface SplitProxyInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "currentWindow",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getMembershipContract",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "membershipContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "merkleRoot", data: BytesLike): Result;
@@ -83,6 +101,14 @@ export class SplitProxy extends Contract {
 
     "currentWindow()"(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    getMembershipContract(overrides?: CallOverrides): Promise<[string]>;
+
+    "getMembershipContract()"(overrides?: CallOverrides): Promise<[string]>;
+
+    membershipContract(overrides?: CallOverrides): Promise<[string]>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<[string]>;
+
     merkleRoot(overrides?: CallOverrides): Promise<[string]>;
 
     "merkleRoot()"(overrides?: CallOverrides): Promise<[string]>;
@@ -106,6 +132,14 @@ export class SplitProxy extends Contract {
 
   "currentWindow()"(overrides?: CallOverrides): Promise<BigNumber>;
 
+  getMembershipContract(overrides?: CallOverrides): Promise<string>;
+
+  "getMembershipContract()"(overrides?: CallOverrides): Promise<string>;
+
+  membershipContract(overrides?: CallOverrides): Promise<string>;
+
+  "membershipContract()"(overrides?: CallOverrides): Promise<string>;
+
   merkleRoot(overrides?: CallOverrides): Promise<string>;
 
   "merkleRoot()"(overrides?: CallOverrides): Promise<string>;
@@ -128,6 +162,14 @@ export class SplitProxy extends Contract {
     currentWindow(overrides?: CallOverrides): Promise<BigNumber>;
 
     "currentWindow()"(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getMembershipContract(overrides?: CallOverrides): Promise<string>;
+
+    "getMembershipContract()"(overrides?: CallOverrides): Promise<string>;
+
+    membershipContract(overrides?: CallOverrides): Promise<string>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<string>;
 
     merkleRoot(overrides?: CallOverrides): Promise<string>;
 
@@ -155,6 +197,14 @@ export class SplitProxy extends Contract {
 
     "currentWindow()"(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getMembershipContract(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "getMembershipContract()"(overrides?: CallOverrides): Promise<BigNumber>;
+
+    membershipContract(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<BigNumber>;
+
     merkleRoot(overrides?: CallOverrides): Promise<BigNumber>;
 
     "merkleRoot()"(overrides?: CallOverrides): Promise<BigNumber>;
@@ -178,6 +228,22 @@ export class SplitProxy extends Contract {
     currentWindow(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     "currentWindow()"(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getMembershipContract(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "getMembershipContract()"(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    membershipContract(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "membershipContract()"(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     merkleRoot(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

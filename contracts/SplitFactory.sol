@@ -12,6 +12,7 @@ contract SplitFactory {
 
     address public immutable splitter;
     address public immutable wethAddress;
+    address public immutable membershipContract;
 
     //======== Mutable storage =========
 
@@ -20,9 +21,10 @@ contract SplitFactory {
 
     //======== Constructor =========
 
-    constructor(address splitter_, address wethAddress_) {
+    constructor(address splitter_, address wethAddress_, address membershipContract_) {
         splitter = splitter_;
         wethAddress = wethAddress_;
+        membershipContract = membershipContract_;
     }
 
     //======== Deploy function =========

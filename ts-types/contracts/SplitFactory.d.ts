@@ -23,6 +23,7 @@ import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 interface SplitFactoryInterface extends ethers.utils.Interface {
   functions: {
     "createSplit(bytes32)": FunctionFragment;
+    "membershipContract()": FunctionFragment;
     "merkleRoot()": FunctionFragment;
     "splitter()": FunctionFragment;
     "wethAddress()": FunctionFragment;
@@ -31,6 +32,10 @@ interface SplitFactoryInterface extends ethers.utils.Interface {
   encodeFunctionData(
     functionFragment: "createSplit",
     values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "membershipContract",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "merkleRoot",
@@ -44,6 +49,10 @@ interface SplitFactoryInterface extends ethers.utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "createSplit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "membershipContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "merkleRoot", data: BytesLike): Result;
@@ -80,6 +89,10 @@ export class SplitFactory extends Contract {
       overrides?: Overrides
     ): Promise<ContractTransaction>;
 
+    membershipContract(overrides?: CallOverrides): Promise<[string]>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<[string]>;
+
     merkleRoot(overrides?: CallOverrides): Promise<[string]>;
 
     "merkleRoot()"(overrides?: CallOverrides): Promise<[string]>;
@@ -103,6 +116,10 @@ export class SplitFactory extends Contract {
     overrides?: Overrides
   ): Promise<ContractTransaction>;
 
+  membershipContract(overrides?: CallOverrides): Promise<string>;
+
+  "membershipContract()"(overrides?: CallOverrides): Promise<string>;
+
   merkleRoot(overrides?: CallOverrides): Promise<string>;
 
   "merkleRoot()"(overrides?: CallOverrides): Promise<string>;
@@ -125,6 +142,10 @@ export class SplitFactory extends Contract {
       merkleRoot_: BytesLike,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    membershipContract(overrides?: CallOverrides): Promise<string>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<string>;
 
     merkleRoot(overrides?: CallOverrides): Promise<string>;
 
@@ -152,6 +173,10 @@ export class SplitFactory extends Contract {
       overrides?: Overrides
     ): Promise<BigNumber>;
 
+    membershipContract(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "membershipContract()"(overrides?: CallOverrides): Promise<BigNumber>;
+
     merkleRoot(overrides?: CallOverrides): Promise<BigNumber>;
 
     "merkleRoot()"(overrides?: CallOverrides): Promise<BigNumber>;
@@ -174,6 +199,14 @@ export class SplitFactory extends Contract {
     "createSplit(bytes32)"(
       merkleRoot_: BytesLike,
       overrides?: Overrides
+    ): Promise<PopulatedTransaction>;
+
+    membershipContract(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "membershipContract()"(
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     merkleRoot(overrides?: CallOverrides): Promise<PopulatedTransaction>;

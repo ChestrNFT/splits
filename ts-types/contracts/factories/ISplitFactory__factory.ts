@@ -19,6 +19,19 @@ export class ISplitFactory__factory {
 const _abi = [
   {
     inputs: [],
+    name: "membershipContract",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "merkleRoot",
     outputs: [
       {
