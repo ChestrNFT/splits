@@ -2,7 +2,7 @@
 pragma solidity 0.8.4;
 
 import {SplitStorage} from "./SplitStorage.sol";
-import {IRoyaltyVault} from "./IRoyaltyVault.sol";
+import {IRoyaltyVault} from "@chestrnft/royalty-vault/interfaces/IRoyaltyVault.sol";
 
 interface IERC20 {
     function balanceOf(address account) external view returns (uint256);
@@ -142,22 +142,20 @@ contract Splitter is SplitStorage {
         );
     }
 
-    function incrementWindow(uint256 royaltyAmount) public {
-        uint256 fundsAvailable;
+    function incrementWindow(uint256 royaltyAmount) public returns(bool){
         uint256 wethBalance;
 
-        // require(IRoyaltyVault(msg.sender).supportsInterface(IID_IROYALTY),"Royalty Vault not supported");
-        // require(IRoyaltyVault(msg.sender).splitter()==address(this),"Unauthorised to increment window");
+        require(IRoyaltyVault(msg.sender).supportsInterface(IID_IROYALTY),"Royalty Vault not supported");
+        require(IRoyaltyVault(msg.sender).getSplitter()==address(this),"Unauthorised to increment window");
 
-        wethBalance = IERC20(wethAddress).balanceOf(address(this));
-        fundsAvailable = royaltyAmount;
+        wethBalance = IERC20(wethAddress).balanceOf(address(this));    
+        require(wethBalance >= royaltyAmount, "Insufficient funds");
         
-        require(wethBalance >= fundsAvailable, "Insufficient funds");
-        
-        require(fundsAvailable > 0, "No additional funds for window");
-        balanceForWindow.push(fundsAvailable);
+        require(royaltyAmount > 0, "No additional funds for window");
+        balanceForWindow.push(royaltyAmount);
         currentWindow += 1;
-        emit WindowIncremented(currentWindow, fundsAvailable);
+        emit WindowIncremented(currentWindow, royaltyAmount);
+        return true;
     }
 
     function isClaimed(uint256 window, address membershipContract, uint32 tokenId)
