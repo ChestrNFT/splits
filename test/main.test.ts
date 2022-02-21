@@ -350,6 +350,87 @@ describe("SplitProxy via Factory", () => {
               });
             });
           });
+
+          describe("Adding 2 more weth and incrementing window twice.", () => {
+            before(async () => {
+              
+              await fakeWETH
+              .connect(funder)
+              .transfer(royaltyVault, ethers.utils.parseEther("1"));
+              await royaltyVaultContract.sendToSplitter();
+
+              await fakeWETH
+              .connect(funder)
+              .transfer(royaltyVault, ethers.utils.parseEther("1"));
+              await royaltyVaultContract.sendToSplitter();
+
+            });
+
+            describe("and the second account claims on the all window", () => {
+              let amountClaimedBySecond;
+              before(async () => {
+                // Setup.
+                const account = account2.address;
+                const allocation = BigNumber.from("50000000");
+                const proof = tree.getProof(myNFT.address,2, allocation);
+                const accountBalanceBefore = await waffle.provider.getBalance(
+                  account
+                );
+
+                await callableProxy
+                  .connect(account2)
+                  .claimForAllWindows(2, allocation, proof);
+
+                const accountBalanceAfter = await waffle.provider.getBalance(
+                  account
+                );
+
+                amountClaimedBySecond = accountBalanceAfter.sub(
+                  accountBalanceBefore
+                );
+
+              });
+
+              it("allows them to successfully claim 1 ETH", async () => {
+                expect(amountClaimedBySecond).to.lt(
+                  ethers.utils.parseEther("1")
+                );
+              });              
+            });
+            
+            describe("and the first account claims on the all window", () => {
+              let amountClaimedBySecond;
+              before(async () => {
+                // Setup.
+                const account = account1.address;
+                const allocation = BigNumber.from("50000000");
+                const proof = tree.getProof(myNFT.address,1, allocation);
+                const accountBalanceBefore = await waffle.provider.getBalance(
+                  account
+                );
+
+                await callableProxy
+                  .connect(account1)
+                  .claimForAllWindows(1, allocation, proof);
+
+                const accountBalanceAfter = await waffle.provider.getBalance(
+                  account
+                );
+
+                amountClaimedBySecond = accountBalanceAfter.sub(
+                  accountBalanceBefore
+                );
+
+              });
+
+              it("allows them to successfully claim 1 ETH", async () => {
+                expect(amountClaimedBySecond).to.lt(
+                  ethers.utils.parseEther("1")
+                );
+              });              
+            });
+
+          });
         });
       });
     });
