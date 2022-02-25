@@ -12,6 +12,7 @@ import {IWETH} from "../interfaces/IWETH.sol";
  * Building on the work from the Uniswap team at Uniswap and Mirror.xyz Team
  */
 contract Splitter is SplitStorage {
+    /**** Mutable variables ****/
     uint256 public constant PERCENTAGE_SCALE = 10e5;
     bytes4 public constant IID_IROYALTY = type(IRoyaltyVault).interfaceId;
 
@@ -28,6 +29,12 @@ contract Splitter is SplitStorage {
     // Emits when a window is incremented.
     event WindowIncremented(uint256 currentWindow, uint256 fundsAvailable);
 
+    /**
+     * @dev Claim the funds from the all windows.
+     * @param tokenId {uint32} The id of the Memebrship Token
+     * @param percentageAllocation {uint256} percentage of allocation to be claimed
+     * @param merkleProof {bytes32} The Merkle proof of the allocation
+     */
     function claimForAllWindows(
         uint32 tokenId,
         uint256 percentageAllocation,
@@ -62,6 +69,13 @@ contract Splitter is SplitStorage {
         transferSplitAsset(tokenOwner, amount);
     }
 
+    /**
+     * @dev get Node hash of given data.
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     * @param percentageAllocation {uint256} percentage of allocation
+     * @return {bytes32} node hash
+     */
     function getNode(
         address membershipContract,
         uint32 tokenId,
@@ -77,6 +91,12 @@ contract Splitter is SplitStorage {
             );
     }
 
+    /**
+     * @dev get scaled amount from given amount and percentage.
+     * @param amount {uint256} amount
+     * @param scaledPercent {uint256} scaled percentage
+     * @return scaledAmount {uint256} scaled amount
+     */
     function scaleAmountByPercentage(uint256 amount, uint256 scaledPercent)
         public
         pure
@@ -94,6 +114,13 @@ contract Splitter is SplitStorage {
         scaledAmount = (amount * scaledPercent) / (10000);
     }
 
+    /**
+     * @dev claim for the given window.
+     * @param window {uint256} Window to claim
+     * @param tokenId {uint32} Id of the Memebrship Token
+     * @param scaledPercentageAllocation {uint256} percentage of allocation to be claimed
+     * @param merkleProof {bytes32} The Merkle proof of the allocation
+     */
     function claim(
         uint256 window,
         uint32 tokenId,
@@ -131,6 +158,11 @@ contract Splitter is SplitStorage {
         );
     }
 
+    /**
+     * @dev Function which handles increment window and puts amount to current window
+     * @param royaltyAmount {uint256} Amount needs to be added in window.
+     * @return {bool} Whether or not the window was incremented.
+     */
     function incrementWindow(uint256 royaltyAmount) public returns (bool) {
         uint256 wethBalance;
 
@@ -153,6 +185,13 @@ contract Splitter is SplitStorage {
         return true;
     }
 
+    /**
+     * @dev Function checks if the given window and tokenId has been claimed.
+     * @param window {uint256} Window to check
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     * @return {bool} Whether or not the window has been claimed.
+     */
     function isClaimed(
         uint256 window,
         address membershipContract,
@@ -161,8 +200,14 @@ contract Splitter is SplitStorage {
         return claimed[getClaimHash(window, membershipContract, tokenId)];
     }
 
-    //======== Private Functions ========
+    /**** Private Functions ****/
 
+    /**
+     * @dev Function which sets the given window and tokenId as claimed.
+     * @param window {uint256} Window to set as claimed
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     */
     function setClaimed(
         uint256 window,
         address membershipContract,
@@ -171,6 +216,13 @@ contract Splitter is SplitStorage {
         claimed[getClaimHash(window, membershipContract, tokenId)] = true;
     }
 
+    /**
+     * @dev Function which returns the hash of the given window, tokenId and membershipContract.
+     * @param window {uint256} Window to check
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     * @return {bytes32} Hash of the given window, tokenId and membershipContract.
+     */
     function getClaimHash(
         uint256 window,
         address membershipContract,
@@ -179,6 +231,12 @@ contract Splitter is SplitStorage {
         return keccak256(abi.encodePacked(window, membershipContract, tokenId));
     }
 
+    /**
+     * @dev Function to convert output amount from percentages.
+     * @param amount {uint256} Amount for which percentage is to be calculated.
+     * @param percent {uint256} Percentage
+     * @return {uint256} Output amount.
+     */
     function amountFromPercent(uint256 amount, uint32 percent)
         private
         pure
@@ -188,7 +246,11 @@ contract Splitter is SplitStorage {
         return (amount * percent) / 100;
     }
 
-    // Will attempt to transfer ETH, but will transfer WETH instead if it fails.
+    /**
+     * @dev Function to transfer split asset to the given address.
+     * @param to {address} Address to transfer the split asset to.
+     * @param value {uint256} Amount to transfer.
+     */
     function transferSplitAsset(address to, uint256 value)
         private
         returns (bool didSucceed)
@@ -200,6 +262,12 @@ contract Splitter is SplitStorage {
         emit TransferETH(to, value, didSucceed);
     }
 
+    /**
+     * @dev transfer given amount of ETH in contract to the given address.
+     * @param to {address} Address to transfer asset
+     * @param value {uint256} Amount to transfer
+     * @return {bool} Whether or not the transfer was successful.
+     */
     function attemptETHTransfer(address to, uint256 value)
         private
         returns (bool)
@@ -212,6 +280,13 @@ contract Splitter is SplitStorage {
     }
 
     // From https://github.com/protofire/zeppelin-solidity/blob/master/contracts/MerkleProof.sol
+    /**
+     * @dev Function to verify the given proof.
+     * @param proof {bytes32[]} Proof to verify
+     * @param root {bytes32} Root of the Merkle tree
+     * @param leaf {bytes32} Leaf to verify
+     * @return {bool} Whether or not the proof is valid.
+     */
     function verifyProof(
         bytes32[] memory proof,
         bytes32 root,

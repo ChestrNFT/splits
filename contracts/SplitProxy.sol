@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity 0.8.4;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
 
 import {SplitStorage} from "./SplitStorage.sol";
 
@@ -15,7 +15,6 @@ interface ISplitFactory {
 
 /**
  * @title SplitProxy
- * @author MirrorXYZ
  */
 contract SplitProxy is SplitStorage {
     constructor() {
@@ -44,16 +43,21 @@ contract SplitProxy is SplitStorage {
         }
     }
 
+    /**
+     * @dev Returns the address of the splitter contract.
+     * @return address
+     */
     function splitter() public view returns (address) {
         return _splitter;
     }
 
+    /**
+     * @dev Returns the address of the membership contract.
+     * @return address
+     */
     function getMembershipContract() public view returns (address) {
         return membershipContract;
     }
 
-    // Plain ETH transfers.
-    receive() external payable {
-        //depositedInWindow += msg.value;
-    }
+    receive() external payable {}
 }
