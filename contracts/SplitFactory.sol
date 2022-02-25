@@ -51,7 +51,7 @@ contract SplitFactory {
      * @param _merkleRoot The merkle root of the asset.
      * @param _splitAsset The address of the asset to split.
      * @param _membershipContract The address of the membership contract.
-     * @param _collectionContract The address of the membership contract.
+     * @param _collectionContract The address of the collection contract.
      */
     function createSplit(
         bytes32 _merkleRoot,
