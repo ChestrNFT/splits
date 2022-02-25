@@ -1,4 +1,3 @@
-//Contract based on [https://docs.openzeppelin.com/contracts/3.x/erc721](https://docs.openzeppelin.com/contracts/3.x/erc721)
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -12,15 +11,12 @@ contract MyNFT is ERC721, Ownable {
 
     constructor() ERC721("MyNFT", "NFT") {}
 
-    function mintNFT(address recipient)
-        public onlyOwner
-        returns (uint256)
-    {
+    function mintNFT(address recipient) public onlyOwner returns (uint256) {
         _tokenIds.increment();
 
         uint256 newItemId = _tokenIds.current();
         _mint(recipient, newItemId);
-        
+
         return newItemId;
     }
 }

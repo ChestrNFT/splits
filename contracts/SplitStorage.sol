@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.4;
 
 /**
@@ -8,7 +8,7 @@ pragma solidity 0.8.4;
 contract SplitStorage {
     bytes32 public merkleRoot;
     uint256 public currentWindow;
-    address internal wethAddress;
+    address internal splitAsset;
     address internal _splitter;
     uint256[] public balanceForWindow;
     mapping(bytes32 => bool) internal claimed;

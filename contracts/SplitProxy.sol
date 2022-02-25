@@ -8,7 +8,7 @@ interface ISplitFactory {
 
     function membershipContract() external returns (address);
 
-    function wethAddress() external returns (address);
+    function splitAsset() external returns (address);
 
     function merkleRoot() external returns (bytes32);
 }
@@ -21,7 +21,7 @@ contract SplitProxy is SplitStorage {
     constructor() {
         _splitter = ISplitFactory(msg.sender).splitter();
         membershipContract = ISplitFactory(msg.sender).membershipContract();
-        wethAddress = ISplitFactory(msg.sender).wethAddress();
+        splitAsset = ISplitFactory(msg.sender).splitAsset();
         merkleRoot = ISplitFactory(msg.sender).merkleRoot();
     }
 
@@ -35,19 +35,19 @@ contract SplitProxy is SplitStorage {
             returndatacopy(ptr, 0, size)
 
             switch result
-                case 0 {
-                    revert(ptr, size)
-                }
-                default {
-                    return(ptr, size)
-                }
+            case 0 {
+                revert(ptr, size)
+            }
+            default {
+                return(ptr, size)
+            }
         }
     }
 
     function splitter() public view returns (address) {
         return _splitter;
     }
-    
+
     function getMembershipContract() public view returns (address) {
         return membershipContract;
     }
