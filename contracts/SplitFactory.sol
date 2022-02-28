@@ -41,6 +41,24 @@ contract SplitFactory {
         address indexed collectionContract
     );
 
+    /**** Modifiers ****/
+
+    modifier onlyAvailableSplit(string memory _splitId) {
+        require(
+            splits[_splitId] == address(0),
+            "SplitFactory : Split ID already in use"
+        );
+        _;
+    }
+
+    modifier onlyAvailableMerkleRoot(bytes32 _merkleRoot) {
+        require(
+            merkleRoots[_merkleRoot] == address(0),
+            "SplitFactory : Split already exists of this merkle hash."
+        );
+        _;
+    }
+
     /**
      * @dev Constructor
      * @param _splitter The address of the Splitter contract.
@@ -63,17 +81,12 @@ contract SplitFactory {
         address _membershipContract,
         address _collectionContract,
         string memory _splitId
-    ) external returns (address splitProxy) {
-        require(
-            splits[_splitId] == address(0),
-            "SplitFactory : Split ID already in use"
-        );
-
-        require(
-            merkleRoots[_merkleRoot] == address(0),
-            "SplitFactory : Split already exists of this merkle hash."
-        );
-
+    )
+        external
+        onlyAvailableSplit(_splitId)
+        onlyAvailableMerkleRoot(_merkleRoot)
+        returns (address splitProxy)
+    {
         merkleRoot = _merkleRoot;
         splitAsset = _splitAsset;
         royaltyAsset = _splitAsset;
