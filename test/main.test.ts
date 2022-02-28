@@ -33,18 +33,20 @@ const createSplit = async (
   wEth,
   membershipContract,
   mockCollection,
+  splitId,
 ) => {
   let royaltyVault, splittProxy, splitTx;
 
   if (mockCollection) {
     splitTx = await proxyFactory[
-      'createSplit(bytes32,address,address,address)'
-    ](merkleRoot, wEth, membershipContract, mockCollection);
+      'createSplit(bytes32,address,address,address,string)'
+    ](merkleRoot, wEth, membershipContract, mockCollection, splitId);
   } else {
-    splitTx = await proxyFactory['createSplit(bytes32,address,address)'](
+    splitTx = await proxyFactory['createSplit(bytes32,address,address,string)'](
       merkleRoot,
       wEth,
       membershipContract,
+      splitId,
     );
   }
 
@@ -71,14 +73,18 @@ const deployRoyaltyVault = async () => {
   return await deployRoyaltyVault.deployed();
 };
 
-// const createVault =async (royaltyFactory,collectionContract,wEth)=>{
-//   let royaltyVault;
-//   let royaltyTx = await royaltyFactory.createVault(collectionContract,wEth);
-//   const royaltyVaultTx = await royaltyTx.wait(1)
-//   const event = royaltyVaultTx.events.find(event => event.event === 'VaultCreated');
-//   [royaltyVault] = event.args;
-//   return royaltyVault;
-// }
+const getTree = async (allocationPercentages, membershipContract) => {
+  const allocations = allocationPercentages.map((percentage, index) => {
+    return {
+      account: membershipContract.address,
+      tokenId: index + 1,
+      allocation: BigNumber.from(percentage),
+    };
+  });
+
+  let tree = new AllocationTree(allocations);
+  return tree;
+};
 
 const deployProxyFactory = async (
   splitterAddress: string,
@@ -99,14 +105,16 @@ const NULL_BYTES =
 describe('SplitProxy via Factory', () => {
   describe('basic test', async () => {
     let splitProxyAddress, splitProxy, callableProxy, proxyFactory;
+    let splitProxyAddress2;
     let royaltyVaultProxy, royaltyVaultProxyContract, royaltyFactory;
+    let royaltyVaultProxy2, royaltyVaultProxyContract2, royaltyFactory2;
     let royaltyVault, royaltyVaultContract;
     let mockCollection;
     let tokenId = 1;
     let funder, fakeWETH, account1, account2, platformOwner;
 
-    let tree, claimers;
-    let myNFT;
+    let tree, tree2, claimers;
+    let myNFT, myNFT2;
 
     before(async function() {
       [funder, account1, account2, platformOwner] = await ethers.getSigners();
@@ -115,22 +123,29 @@ describe('SplitProxy via Factory', () => {
 
       fakeWETH = await deployWeth();
       myNFT = await deployNft();
+      myNFT2 = await deployNft();
+      mockCollection = await deployMockCollection();
       mockCollection = await deployMockCollection();
 
       myNFT.mintNFT(account1.address);
       myNFT.mintNFT(account2.address);
+      myNFT2.mintNFT(account2.address);
+      myNFT2.mintNFT(account2.address);
 
       const allocationPercentages = [5000, 5000];
-      const allocations = allocationPercentages.map((percentage, index) => {
-        return {
-          account: myNFT.address,
-          tokenId: index + 1,
-          allocation: BigNumber.from(percentage),
-        };
-      });
+      tree = await getTree(allocationPercentages, myNFT);
+      tree2 = await getTree(allocationPercentages, myNFT2);
 
-      tree = new AllocationTree(allocations);
+      // const allocations = allocationPercentages.map((percentage, index) => {
+      //   return {
+      //     account: myNFT.address,
+      //     tokenId: index + 1,
+      //     allocation: BigNumber.from(percentage),
+      //   };
+      // });
+
       const rootHash = tree.getHexRoot();
+      const rootHash2 = tree2.getHexRoot();
 
       const royaltyVaultContract = await deployRoyaltyVault();
       const splitter = await deploySplitter();
@@ -145,6 +160,16 @@ describe('SplitProxy via Factory', () => {
         fakeWETH.address,
         myNFT.address,
         mockCollection.address,
+        '1',
+      );
+
+      [royaltyVaultProxy2, splitProxyAddress2] = await createSplit(
+        proxyFactory,
+        rootHash2,
+        fakeWETH.address,
+        myNFT2.address,
+        mockCollection.address,
+        '2',
       );
 
       //Compute address.

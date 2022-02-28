@@ -22,11 +22,15 @@ contract SplitFactory {
     address public splitterProxy;
     address public membershipContract;
 
+    mapping(string => address) public splits;
+    mapping(bytes32 => address) public merkleRoots;
+
     /**** Events ****/
 
     event SplitCreated(
         address indexed splitter,
-        address indexed membershipContract
+        address indexed membershipContract,
+        string splitId
     );
 
     event VaultCreated(address indexed vault, address indexed splitter);
@@ -57,17 +61,30 @@ contract SplitFactory {
         bytes32 _merkleRoot,
         address _splitAsset,
         address _membershipContract,
-        address _collectionContract
+        address _collectionContract,
+        string memory _splitId
     ) external returns (address splitProxy) {
+        require(
+            splits[_splitId] == address(0),
+            "SplitFactory : Split ID already in use"
+        );
+
+        require(
+            merkleRoots[_merkleRoot] == address(0),
+            "SplitFactory : Split already exists of this merkle hash."
+        );
+
         merkleRoot = _merkleRoot;
         splitAsset = _splitAsset;
         royaltyAsset = _splitAsset;
         membershipContract = _membershipContract;
 
-        splitProxy = createSplitProxy();
+        splitProxy = createSplitProxy(_splitId);
         address vault = createVaultProxy(splitProxy);
 
         ICoreCollection(_collectionContract).setRoyaltyVault(vault);
+
+        merkleRoots[_merkleRoot] = splitProxy;
 
         emit VaultAssignedToCollection(vault, splitter, _collectionContract);
     }
@@ -81,26 +98,32 @@ contract SplitFactory {
     function createSplit(
         bytes32 _merkleRoot,
         address _splitAsset,
-        address _membershipContract
+        address _membershipContract,
+        string memory _splitId
     ) external returns (address splitProxy) {
         merkleRoot = _merkleRoot;
         splitAsset = _splitAsset;
         royaltyAsset = _splitAsset;
         membershipContract = _membershipContract;
 
-        splitProxy = createSplitProxy();
+        splitProxy = createSplitProxy(_splitId);
         createVaultProxy(splitProxy);
     }
 
     /**
      * @dev Creates a new SplitProxy.
      */
-    function createSplitProxy() private returns (address splitProxy) {
+    function createSplitProxy(string memory _splitId)
+        private
+        returns (address splitProxy)
+    {
         splitProxy = address(
             new SplitProxy{salt: keccak256(abi.encode(merkleRoot))}()
         );
 
-        emit SplitCreated(splitProxy, membershipContract);
+        splits[_splitId] = splitProxy;
+
+        emit SplitCreated(splitProxy, membershipContract, _splitId);
 
         delete merkleRoot;
         delete splitAsset;
