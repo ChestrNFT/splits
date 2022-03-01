@@ -5,9 +5,9 @@ import {SplitProxy} from "./SplitProxy.sol";
 import {IRoyaltyVault} from "@chestrnft/royalty-vault/interfaces/IRoyaltyVault.sol";
 import {ProxyVault} from "@chestrnft/royalty-vault/contracts/ProxyVault.sol";
 import {ICoreCollection} from "../interfaces/ICoreCollection.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract SplitFactory {
+contract SplitFactory is Ownable {
     /**** Immutable storage ****/
 
     address public immutable splitter;
@@ -161,7 +161,10 @@ contract SplitFactory {
      * @param _platformFee Platform fee in scaled percentage. (5% = 200)
      * @param _vault vault address.
      */
-    function setPlatformFee(address _vault, uint256 _platformFee) external {
+    function setPlatformFee(address _vault, uint256 _platformFee)
+        external
+        onlyOwner
+    {
         IRoyaltyVault(_vault).setPlatformFee(_platformFee);
     }
 
@@ -173,7 +176,7 @@ contract SplitFactory {
     function setPlatformFeeRecipient(
         address _vault,
         address _platformFeeRecipient
-    ) external {
+    ) external onlyOwner {
         require(_vault != address(0), "Invalid vault");
         require(
             _platformFeeRecipient != address(0),
