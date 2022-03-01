@@ -1,24 +1,26 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity 0.8.4;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
 
 import {SplitStorage} from "./SplitStorage.sol";
 
 interface ISplitFactory {
     function splitter() external returns (address);
 
-    function wethAddress() external returns (address);
+    function membershipContract() external returns (address);
+
+    function splitAsset() external returns (address);
 
     function merkleRoot() external returns (bytes32);
 }
 
 /**
  * @title SplitProxy
- * @author MirrorXYZ
  */
 contract SplitProxy is SplitStorage {
     constructor() {
         _splitter = ISplitFactory(msg.sender).splitter();
-        wethAddress = ISplitFactory(msg.sender).wethAddress();
+        membershipContract = ISplitFactory(msg.sender).membershipContract();
+        splitAsset = ISplitFactory(msg.sender).splitAsset();
         merkleRoot = ISplitFactory(msg.sender).merkleRoot();
     }
 
@@ -32,21 +34,30 @@ contract SplitProxy is SplitStorage {
             returndatacopy(ptr, 0, size)
 
             switch result
-                case 0 {
-                    revert(ptr, size)
-                }
-                default {
-                    return(ptr, size)
-                }
+            case 0 {
+                revert(ptr, size)
+            }
+            default {
+                return(ptr, size)
+            }
         }
     }
 
+    /**
+     * @dev Returns the address of the splitter contract.
+     * @return address
+     */
     function splitter() public view returns (address) {
         return _splitter;
     }
 
-    // Plain ETH transfers.
-    receive() external payable {
-        depositedInWindow += msg.value;
+    /**
+     * @dev Returns the address of the membership contract.
+     * @return address
+     */
+    function getMembershipContract() public view returns (address) {
+        return membershipContract;
     }
+
+    receive() external payable {}
 }

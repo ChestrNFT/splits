@@ -1,34 +1,20 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity 0.8.4;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
 
 import {SplitStorage} from "./SplitStorage.sol";
-
-interface IERC20 {
-    function balanceOf(address account) external view returns (uint256);
-
-    function transfer(address recipient, uint256 amount)
-        external
-        returns (bool);
-}
-
-interface IERC721 {
-    function ownerOf(uint256 tokenId) external view returns (address owner);
-}
-
-interface IWETH {
-    function deposit() external payable;
-
-    function transfer(address to, uint256 value) external returns (bool);
-}
+import {IRoyaltyVault} from "@chestrnft/royalty-vault/interfaces/IRoyaltyVault.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IWETH} from "../interfaces/IWETH.sol";
 
 /**
  * @title Splitter
- * @author MirrorXYZ
- *
- * Building on the work from the Uniswap team at https://github.com/Uniswap/merkle-distributor
+ * Building on the work from the Uniswap team at Uniswap and Mirror.xyz Team
  */
 contract Splitter is SplitStorage {
+    /**** Mutable variables ****/
     uint256 public constant PERCENTAGE_SCALE = 10e5;
+    bytes4 public constant IID_IROYALTY = type(IRoyaltyVault).interfaceId;
 
     // The TransferETH event is emitted after each eth transfer in the split is attempted.
     event TransferETH(
@@ -43,8 +29,13 @@ contract Splitter is SplitStorage {
     // Emits when a window is incremented.
     event WindowIncremented(uint256 currentWindow, uint256 fundsAvailable);
 
+    /**
+     * @dev Claim the funds from the all windows.
+     * @param tokenId {uint32} The id of the Memebrship Token
+     * @param percentageAllocation {uint256} percentage of allocation to be claimed
+     * @param merkleProof {bytes32} The Merkle proof of the allocation
+     */
     function claimForAllWindows(
-        address account,
         uint32 tokenId,
         uint256 percentageAllocation,
         bytes32[] calldata merkleProof
@@ -54,18 +45,19 @@ contract Splitter is SplitStorage {
             verifyProof(
                 merkleProof,
                 merkleRoot,
-                getNode(account, tokenId, percentageAllocation)
+                getNode(membershipContract, tokenId, percentageAllocation)
             ),
             "Invalid proof"
         );
 
         uint256 amount = 0;
 
-        require(IERC721(account).ownerOf(tokenId)==msg.sender,"Invalid Membership");
-        
+        address tokenOwner = IERC721(membershipContract).ownerOf(tokenId);
+        require(tokenOwner == msg.sender, "Invalid Membership");
+
         for (uint256 i = 0; i < currentWindow; i++) {
-            if (!isClaimed(i, account,tokenId)) {
-                setClaimed(i, account,tokenId);
+            if (!isClaimed(i, membershipContract, tokenId)) {
+                setClaimed(i, membershipContract, tokenId);
 
                 amount += scaleAmountByPercentage(
                     balanceForWindow[i],
@@ -74,17 +66,37 @@ contract Splitter is SplitStorage {
             }
         }
 
-        transferETHOrWETH(account, amount);
+        transferSplitAsset(tokenOwner, amount);
     }
 
-    function getNode(address account, uint32 tokenId, uint256 percentageAllocation)
-        private
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(account, tokenId, percentageAllocation));
+    /**
+     * @dev get Node hash of given data.
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     * @param percentageAllocation {uint256} percentage of allocation
+     * @return {bytes32} node hash
+     */
+    function getNode(
+        address membershipContract,
+        uint32 tokenId,
+        uint256 percentageAllocation
+    ) private pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    membershipContract,
+                    tokenId,
+                    percentageAllocation
+                )
+            );
     }
 
+    /**
+     * @dev get scaled amount from given amount and percentage.
+     * @param amount {uint256} amount
+     * @param scaledPercent {uint256} scaled percentage
+     * @return scaledAmount {uint256} scaled amount
+     */
     function scaleAmountByPercentage(uint256 amount, uint256 scaledPercent)
         public
         pure
@@ -99,37 +111,45 @@ contract Splitter is SplitStorage {
                 To find out the amount we use, for example: (100 * 200) / (100 * 100)
                 which returns 2 -- i.e. 2% of the 100 ETH balance.
          */
-        scaledAmount = (amount * scaledPercent) / (100 * PERCENTAGE_SCALE);
+        scaledAmount = (amount * scaledPercent) / (10000);
     }
 
+    /**
+     * @dev claim for the given window.
+     * @param window {uint256} Window to claim
+     * @param tokenId {uint32} Id of the Memebrship Token
+     * @param scaledPercentageAllocation {uint256} percentage of allocation to be claimed
+     * @param merkleProof {bytes32} The Merkle proof of the allocation
+     */
     function claim(
         uint256 window,
-        address account,
         uint32 tokenId,
         uint256 scaledPercentageAllocation,
         bytes32[] calldata merkleProof
     ) external {
         require(currentWindow > window, "cannot claim for a future window");
         require(
-            !isClaimed(window, account, tokenId),
-            "Account already claimed the given window"
+            !isClaimed(window, membershipContract, tokenId),
+            "NFT has already claimed the given window"
         );
 
-        setClaimed(window, account, tokenId);
+        setClaimed(window, membershipContract, tokenId);
 
         require(
             verifyProof(
                 merkleProof,
                 merkleRoot,
-                getNode(account, tokenId, scaledPercentageAllocation)
+                getNode(membershipContract, tokenId, scaledPercentageAllocation)
             ),
             "Invalid proof"
         );
 
-        require(IERC721(account).ownerOf(tokenId)==msg.sender,"Invalid Membership");
+        address tokenOwner = IERC721(membershipContract).ownerOf(tokenId);
 
-        transferETHOrWETH(
-            msg.sender,
+        require(tokenOwner == msg.sender, "Invalid Membership");
+
+        transferSplitAsset(
+            tokenOwner,
             // The absolute amount that's claimable.
             scaleAmountByPercentage(
                 balanceForWindow[window],
@@ -138,46 +158,85 @@ contract Splitter is SplitStorage {
         );
     }
 
-    function incrementWindow() public {
-        uint256 fundsAvailable;
+    /**
+     * @dev Function which handles increment window and puts amount to current window
+     * @param royaltyAmount {uint256} Amount needs to be added in window.
+     * @return {bool} Whether or not the window was incremented.
+     */
+    function incrementWindow(uint256 royaltyAmount) public returns (bool) {
+        uint256 wethBalance;
 
-        if (currentWindow == 0) {
-            fundsAvailable = address(this).balance;
-        } else {
-            // Current Balance, subtract previous balance to get the
-            // funds that were added for this window.
-            fundsAvailable = depositedInWindow;
-        }
+        require(
+            IRoyaltyVault(msg.sender).supportsInterface(IID_IROYALTY),
+            "Royalty Vault not supported"
+        );
+        require(
+            IRoyaltyVault(msg.sender).getSplitter() == address(this),
+            "Unauthorised to increment window"
+        );
 
-        depositedInWindow = 0;
-        require(fundsAvailable > 0, "No additional funds for window");
-        balanceForWindow.push(fundsAvailable);
+        wethBalance = IERC20(splitAsset).balanceOf(address(this));
+        require(wethBalance >= royaltyAmount, "Insufficient funds");
+
+        require(royaltyAmount > 0, "No additional funds for window");
+        balanceForWindow.push(royaltyAmount);
         currentWindow += 1;
-        emit WindowIncremented(currentWindow, fundsAvailable);
+        emit WindowIncremented(currentWindow, royaltyAmount);
+        return true;
     }
 
-    function isClaimed(uint256 window, address account, uint32 tokenId)
-        public
-        view
-        returns (bool)
-    {
-        return claimed[getClaimHash(window, account,tokenId)];
+    /**
+     * @dev Function checks if the given window and tokenId has been claimed.
+     * @param window {uint256} Window to check
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     * @return {bool} Whether or not the window has been claimed.
+     */
+    function isClaimed(
+        uint256 window,
+        address membershipContract,
+        uint32 tokenId
+    ) public view returns (bool) {
+        return claimed[getClaimHash(window, membershipContract, tokenId)];
     }
 
-    //======== Private Functions ========
+    /**** Private Functions ****/
 
-    function setClaimed(uint256 window, address account, uint32 tokenId) private {
-        claimed[getClaimHash(window, account, tokenId)] = true;
+    /**
+     * @dev Function which sets the given window and tokenId as claimed.
+     * @param window {uint256} Window to set as claimed
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     */
+    function setClaimed(
+        uint256 window,
+        address membershipContract,
+        uint32 tokenId
+    ) private {
+        claimed[getClaimHash(window, membershipContract, tokenId)] = true;
     }
 
-    function getClaimHash(uint256 window, address account, uint32 tokenId)
-        private
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(window, account, tokenId));
+    /**
+     * @dev Function which returns the hash of the given window, tokenId and membershipContract.
+     * @param window {uint256} Window to check
+     * @param membershipContract {address} Membership contract address
+     * @param tokenId {uint256} token id which claiming person owns
+     * @return {bytes32} Hash of the given window, tokenId and membershipContract.
+     */
+    function getClaimHash(
+        uint256 window,
+        address membershipContract,
+        uint32 tokenId
+    ) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(window, membershipContract, tokenId));
     }
 
+    /**
+     * @dev Function to convert output amount from percentages.
+     * @param amount {uint256} Amount for which percentage is to be calculated.
+     * @param percent {uint256} Percentage
+     * @return {uint256} Output amount.
+     */
     function amountFromPercent(uint256 amount, uint32 percent)
         private
         pure
@@ -187,25 +246,28 @@ contract Splitter is SplitStorage {
         return (amount * percent) / 100;
     }
 
-    // Will attempt to transfer ETH, but will transfer WETH instead if it fails.
-    function transferETHOrWETH(address to, uint256 value)
+    /**
+     * @dev Function to transfer split asset to the given address.
+     * @param to {address} Address to transfer the split asset to.
+     * @param value {uint256} Amount to transfer.
+     */
+    function transferSplitAsset(address to, uint256 value)
         private
         returns (bool didSucceed)
     {
         // Try to transfer ETH to the given recipient.
-        didSucceed = attemptETHTransfer(to, value);
-        if (!didSucceed) {
-            // If the transfer fails, wrap and send as WETH, so that
-            // the auction is not impeded and the recipient still
-            // can claim ETH via the WETH contract (similar to escrow).
-            IWETH(wethAddress).deposit{value: value}();
-            IWETH(wethAddress).transfer(to, value);
-            // At this point, the recipient can unwrap WETH.
-        }
+        didSucceed = IERC20(splitAsset).transfer(to, value);
+        require(didSucceed, "Failed to transfer ETH");
 
         emit TransferETH(to, value, didSucceed);
     }
 
+    /**
+     * @dev transfer given amount of ETH in contract to the given address.
+     * @param to {address} Address to transfer asset
+     * @param value {uint256} Amount to transfer
+     * @return {bool} Whether or not the transfer was successful.
+     */
     function attemptETHTransfer(address to, uint256 value)
         private
         returns (bool)
@@ -218,6 +280,13 @@ contract Splitter is SplitStorage {
     }
 
     // From https://github.com/protofire/zeppelin-solidity/blob/master/contracts/MerkleProof.sol
+    /**
+     * @dev Function to verify the given proof.
+     * @param proof {bytes32[]} Proof to verify
+     * @param root {bytes32} Root of the Merkle tree
+     * @param leaf {bytes32} Leaf to verify
+     * @return {bool} Whether or not the proof is valid.
+     */
     function verifyProof(
         bytes32[] memory proof,
         bytes32 root,
