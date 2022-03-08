@@ -2,6 +2,8 @@ import { ethers, waffle } from "hardhat";
 import fs from "fs";
 const hre = require("hardhat");
 
+const { formatContract, writeToJson } = require("./utils/generate");
+
 const config = {
   mainnet: {
     WETH_ADDRESS: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
@@ -56,23 +58,40 @@ async function main() {
   );
   await splitFactory.deployed();
 
-  const info = {
-    Contracts: {
-      Splitter: splitter.address,
-      SplitFactory: splitFactory.address,
-      MyNFT: myNFT.address,
-    },
-  };
+  // copying abis and contract address => networks
+  const contracts = ["MyNFT", "Splitter", "SplitFactory"];
+  const addresses = [
+    myNFT.address,
+    splitter.address,
+    splitFactory.address,
+  ];
 
-  console.log(info);
+  const content = contracts.reduce((value, contract, index) => {
+    return {
+      ...value,
+      ...formatContract(contract, addresses[index]),
+    };
+  }, {});
+
+  writeToJson(chainId, content);
+
+  // const info = {
+  //   Contracts: {
+  //     Splitter: splitter.address,
+  //     SplitFactory: splitFactory.address,
+  //     MyNFT: myNFT.address,
+  //   },
+  // };
+
+  // console.log(info);
   
 
-  if (!isLocal) {
-    fs.writeFileSync(
-      `${__dirname}/../networks/${networkName}.json`,
-      JSON.stringify(info, null, 2)
-    );
-  }
+  // if (!isLocal) {
+  //   fs.writeFileSync(
+  //     `${__dirname}/../networks/${networkName}.json`,
+  //     JSON.stringify(info, null, 2)
+  //   );
+  // }
 
 
   setTimeout(async ()=>{
