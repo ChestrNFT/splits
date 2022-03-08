@@ -74,25 +74,6 @@ async function main() {
 
   writeToJson(chainId, content);
 
-  // const info = {
-  //   Contracts: {
-  //     Splitter: splitter.address,
-  //     SplitFactory: splitFactory.address,
-  //     MyNFT: myNFT.address,
-  //   },
-  // };
-
-  // console.log(info);
-  
-
-  // if (!isLocal) {
-  //   fs.writeFileSync(
-  //     `${__dirname}/../networks/${networkName}.json`,
-  //     JSON.stringify(info, null, 2)
-  //   );
-  // }
-
-
   setTimeout(async ()=>{
     await hre.run("verify:verify", {
       address: myNFT.address,
