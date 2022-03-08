@@ -8,5 +8,4 @@ build/
 ts-types/
 .env
 *.DS_Store
-env*
 .vscode
