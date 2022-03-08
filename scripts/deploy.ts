@@ -59,9 +59,8 @@ async function main() {
   await splitFactory.deployed();
 
   // copying abis and contract address => networks
-  const contracts = ["MyNFT", "Splitter", "SplitFactory"];
+  const contracts = ["Splitter", "SplitFactory"];
   const addresses = [
-    myNFT.address,
     splitter.address,
     splitFactory.address,
   ];
