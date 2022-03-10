@@ -5,7 +5,11 @@ import '@nomiclabs/hardhat-solhint';
 import 'hardhat-typechain';
 import "@nomiclabs/hardhat-etherscan";
 
-const { alchemyAPIKey, deployerPrivateKey } = require('./env.json');
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const alchemyAPIKey = process.env.ALCHEMY_API_KEY;
+const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
