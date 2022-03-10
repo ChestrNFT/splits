@@ -278,10 +278,12 @@ describe('SplitProxy via Factory', () => {
 
           it('gets 0.45 ETH from scaleAmountByPercentage', async () => {
             expect(
-              await splitProxy.scaleAmountByPercentage(
-                allocation.toString(),
-                ethers.utils.parseEther('0.9').toString(),
-              ),
+              (
+                await splitProxy.scaleAmountByPercentage(
+                  allocation.toString(),
+                  ethers.utils.parseEther('0.9').toString(),
+                )
+              ).toString(),
             ).to.eq(ethers.utils.parseEther('0.45').toString());
           });
 
