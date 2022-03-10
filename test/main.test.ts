@@ -225,7 +225,9 @@ describe('SplitProxy via Factory', () => {
           .transfer(royaltyVaultProxy, ethers.utils.parseEther('1'));
         const balance = await fakeWETH.balanceOf(royaltyVaultProxy);
 
-        expect(await balance).to.eq(ethers.utils.parseEther('1').toString());
+        expect(balance.toString()).to.eq(
+          ethers.utils.parseEther('1').toString(),
+        );
       });
 
       it('Owner of RoyaltyVault must be SplitFactory', async function() {
