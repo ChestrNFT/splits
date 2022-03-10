@@ -239,12 +239,16 @@ describe('SplitProxy via Factory', () => {
         await royaltyVaultProxyContract.sendToSplitter();
         setTimeout(async () => {}, 5000);
         const balance = await fakeWETH.balanceOf(splitProxy.address);
-        expect(await balance).to.eq(ethers.utils.parseEther('0.90').toString());
+        expect(balance.toString()).to.eq(
+          ethers.utils.parseEther('0.90').toString(),
+        );
       });
 
       it('Check for platform fee added to owner address', async function() {
         const balance = await fakeWETH.balanceOf(platformOwner.address);
-        expect(await balance).to.eq(ethers.utils.parseEther('0.10').toString());
+        expect(balance.toString()).to.eq(
+          ethers.utils.parseEther('0.10').toString(),
+        );
       });
 
       describe('and 1 ETH is deposited and the window is incremented', () => {
@@ -282,7 +286,9 @@ describe('SplitProxy via Factory', () => {
           });
 
           it('allows them to successfully claim 0.45 ETH', async () => {
-            expect(amountClaimed).to.eq(ethers.utils.parseEther('0.45'));
+            expect(amountClaimed.toString()).to.eq(
+              ethers.utils.parseEther('0.45'),
+            );
           });
 
           it('costs 105514 gas', async () => {
@@ -320,7 +326,7 @@ describe('SplitProxy via Factory', () => {
               });
 
               it('allows them to successfully claim 0.45 ETH', async () => {
-                expect(amountClaimedBySecond).to.eq(
+                expect(amountClaimedBySecond.toString()).to.eq(
                   ethers.utils.parseEther('0.45'),
                 );
               });
@@ -347,7 +353,7 @@ describe('SplitProxy via Factory', () => {
               });
 
               it('allows them to successfully claim 0.45 ETH', async () => {
-                expect(amountClaimedBySecond).to.eq(
+                expect(amountClaimedBySecond.toString()).to.eq(
                   ethers.utils.parseEther('0.45'),
                 );
               });
@@ -373,7 +379,9 @@ describe('SplitProxy via Factory', () => {
               });
 
               it('allows them to successfully claim 0.45 ETH', async () => {
-                expect(amountClaimed).to.eq(ethers.utils.parseEther('0.45'));
+                expect(amountClaimed.toString()).to.eq(
+                  ethers.utils.parseEther('0.45'),
+                );
               });
             });
           });
@@ -412,7 +420,7 @@ describe('SplitProxy via Factory', () => {
               });
 
               it('allows them to successfully claim 1 ETH', async () => {
-                expect(amountClaimedBySecond).to.eq(
+                expect(amountClaimedBySecond.toString()).to.eq(
                   ethers.utils.parseEther('.9'),
                 );
               });
@@ -439,7 +447,7 @@ describe('SplitProxy via Factory', () => {
               });
 
               it('allows them to successfully claim 1 ETH', async () => {
-                expect(amountClaimedBySecond).to.eq(
+                expect(amountClaimedBySecond.toString()).to.eq(
                   ethers.utils.parseEther('.9'),
                 );
               });
