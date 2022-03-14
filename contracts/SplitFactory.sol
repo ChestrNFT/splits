@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {SplitProxy} from "./SplitProxy.sol";
-import {IRoyaltyVault} from "@chestrnft/royalty-vault/interfaces/IRoyaltyVault.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ProxyVault} from "@chestrnft/royalty-vault/contracts/ProxyVault.sol";
+import {SplitProxy} from "./SplitProxy.sol";
+
+import {IRoyaltyVault} from "@chestrnft/royalty-vault/interfaces/IRoyaltyVault.sol";
 import {ICoreCollection} from "../interfaces/ICoreCollection.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SplitFactory is Ownable {
     /**** Immutable storage ****/
@@ -20,7 +21,6 @@ contract SplitFactory is Ownable {
     address public splitAsset;
     address public royaltyAsset;
     address public splitterProxy;
-    address public membershipContract;
 
     mapping(string => address) public splits;
     mapping(bytes32 => address) public merkleRoots;
@@ -29,7 +29,6 @@ contract SplitFactory is Ownable {
 
     event SplitCreated(
         address indexed splitter,
-        address indexed membershipContract,
         string splitId
     );
 
@@ -72,13 +71,11 @@ contract SplitFactory is Ownable {
      * @dev Deploys a new SplitProxy with membershipContract.
      * @param _merkleRoot The merkle root of the asset.
      * @param _splitAsset The address of the asset to split.
-     * @param _membershipContract The address of the membership contract.
      * @param _collectionContract The address of the collection contract.
      */
     function createSplit(
         bytes32 _merkleRoot,
         address _splitAsset,
-        address _membershipContract,
         address _collectionContract,
         string memory _splitId
     )
@@ -90,7 +87,6 @@ contract SplitFactory is Ownable {
         merkleRoot = _merkleRoot;
         splitAsset = _splitAsset;
         royaltyAsset = _splitAsset;
-        membershipContract = _membershipContract;
 
         splitProxy = createSplitProxy(_splitId);
         address vault = createVaultProxy(splitProxy);
@@ -106,18 +102,15 @@ contract SplitFactory is Ownable {
      * @dev Deploys a new SplitProxy.
      * @param _merkleRoot The merkle root of the asset.
      * @param _splitAsset The address of the asset to split.
-     * @param _membershipContract The address of the membership contract.
      */
     function createSplit(
         bytes32 _merkleRoot,
         address _splitAsset,
-        address _membershipContract,
         string memory _splitId
     ) external returns (address splitProxy) {
         merkleRoot = _merkleRoot;
         splitAsset = _splitAsset;
         royaltyAsset = _splitAsset;
-        membershipContract = _membershipContract;
 
         splitProxy = createSplitProxy(_splitId);
         createVaultProxy(splitProxy);
@@ -136,11 +129,10 @@ contract SplitFactory is Ownable {
 
         splits[_splitId] = splitProxy;
 
-        emit SplitCreated(splitProxy, membershipContract, _splitId);
+        emit SplitCreated(splitProxy, _splitId);
 
         delete merkleRoot;
         delete splitAsset;
-        delete membershipContract;
     }
 
     function createVaultProxy(address splitProxy)
