@@ -31,12 +31,10 @@ contract Splitter is SplitStorage {
 
     /**
      * @dev Claim the funds from the all windows.
-     * @param tokenId {uint32} The id of the Memebrship Token
      * @param percentageAllocation {uint256} percentage of allocation to be claimed
      * @param merkleProof {bytes32} The Merkle proof of the allocation
      */
     function claimForAllWindows(
-        uint32 tokenId,
         uint256 percentageAllocation,
         bytes32[] calldata merkleProof
     ) external {
@@ -45,19 +43,15 @@ contract Splitter is SplitStorage {
             verifyProof(
                 merkleProof,
                 merkleRoot,
-                getNode(membershipContract, tokenId, percentageAllocation)
+                getNode(msg.sender, percentageAllocation)
             ),
             "Invalid proof"
         );
 
         uint256 amount = 0;
-
-        address tokenOwner = IERC721(membershipContract).ownerOf(tokenId);
-        require(tokenOwner == msg.sender, "Invalid Membership");
-
         for (uint256 i = 0; i < currentWindow; i++) {
-            if (!isClaimed(i, membershipContract, tokenId)) {
-                setClaimed(i, membershipContract, tokenId);
+            if (!isClaimed(msg.sender, i)) {
+                setClaimed(msg.sender, i);
 
                 amount += scaleAmountByPercentage(
                     balanceForWindow[i],
@@ -66,26 +60,23 @@ contract Splitter is SplitStorage {
             }
         }
 
-        transferSplitAsset(tokenOwner, amount);
+        transferSplitAsset(msg.sender, amount);
     }
 
     /**
      * @dev get Node hash of given data.
-     * @param membershipContract {address} Membership contract address
-     * @param tokenId {uint256} token id which claiming person owns
+     * @param who {address} whitelisted user address
      * @param percentageAllocation {uint256} percentage of allocation
      * @return {bytes32} node hash
      */
     function getNode(
-        address membershipContract,
-        uint32 tokenId,
+        address who,
         uint256 percentageAllocation
     ) private pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
-                    membershipContract,
-                    tokenId,
+                    who,
                     percentageAllocation
                 )
             );
@@ -117,39 +108,33 @@ contract Splitter is SplitStorage {
     /**
      * @dev claim for the given window.
      * @param window {uint256} Window to claim
-     * @param tokenId {uint32} Id of the Memebrship Token
      * @param scaledPercentageAllocation {uint256} percentage of allocation to be claimed
      * @param merkleProof {bytes32} The Merkle proof of the allocation
      */
     function claim(
         uint256 window,
-        uint32 tokenId,
         uint256 scaledPercentageAllocation,
         bytes32[] calldata merkleProof
     ) external {
         require(currentWindow > window, "cannot claim for a future window");
         require(
-            !isClaimed(window, membershipContract, tokenId),
+            !isClaimed(msg.sender, window),
             "NFT has already claimed the given window"
         );
 
-        setClaimed(window, membershipContract, tokenId);
+        setClaimed(msg.sender, window);
 
         require(
             verifyProof(
                 merkleProof,
                 merkleRoot,
-                getNode(membershipContract, tokenId, scaledPercentageAllocation)
+                getNode(msg.sender, scaledPercentageAllocation)
             ),
             "Invalid proof"
         );
 
-        address tokenOwner = IERC721(membershipContract).ownerOf(tokenId);
-
-        require(tokenOwner == msg.sender, "Invalid Membership");
-
         transferSplitAsset(
-            tokenOwner,
+            msg.sender,
             // The absolute amount that's claimable.
             scaleAmountByPercentage(
                 balanceForWindow[window],
@@ -187,48 +172,42 @@ contract Splitter is SplitStorage {
 
     /**
      * @dev Function checks if the given window and tokenId has been claimed.
+     * @param who {address} whitelisted user address
      * @param window {uint256} Window to check
-     * @param membershipContract {address} Membership contract address
-     * @param tokenId {uint256} token id which claiming person owns
      * @return {bool} Whether or not the window has been claimed.
      */
     function isClaimed(
-        uint256 window,
-        address membershipContract,
-        uint32 tokenId
+        address who,
+        uint256 window
     ) public view returns (bool) {
-        return claimed[getClaimHash(window, membershipContract, tokenId)];
+        return claimed[getClaimHash(who, window)];
     }
 
     /**** Private Functions ****/
 
     /**
-     * @dev Function which sets the given window and tokenId as claimed.
-     * @param window {uint256} Window to set as claimed
-     * @param membershipContract {address} Membership contract address
-     * @param tokenId {uint256} token id which claiming person owns
+     * @dev Function checks if the given window and tokenId has been claimed.
+     * @param who {address} whitelisted user address
+     * @param window {uint256} Window to check
      */
     function setClaimed(
-        uint256 window,
-        address membershipContract,
-        uint32 tokenId
+        address who,
+        uint256 window
     ) private {
-        claimed[getClaimHash(window, membershipContract, tokenId)] = true;
+        claimed[getClaimHash(who, window)] = true;
     }
 
     /**
      * @dev Function which returns the hash of the given window, tokenId and membershipContract.
+     * @param who {address} whitelisted user address
      * @param window {uint256} Window to check
-     * @param membershipContract {address} Membership contract address
-     * @param tokenId {uint256} token id which claiming person owns
      * @return {bytes32} Hash of the given window, tokenId and membershipContract.
      */
     function getClaimHash(
-        uint256 window,
-        address membershipContract,
-        uint32 tokenId
+        address who,
+        uint256 window
     ) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(window, membershipContract, tokenId));
+        return keccak256(abi.encodePacked(who, window));
     }
 
     /**
