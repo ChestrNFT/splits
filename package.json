@@ -1,13 +1,12 @@
 {
-  "name": "mirror-protocol-v1",
+  "name": "@chestrnft/splits",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "git@github.com:mirror-xyz/ethereum-protocol.git",
-  "author": "<graemelearn@protonmail.com>",
+  "repository": "git@github.com:ChestrNFT/splits.git",
+  "author": "<hello@chestr.io>",
   "license": "MIT",
   "scripts": {
     "test": "hardhat test",
-    "fix:flatten": "sed -i '' '///SPDX/,+1 d' flattened/MirrorWriteToken.sol",
     "deploy:default": "hardhat run scripts/deploy.ts",
     "deploy:rinkeby": "hardhat run --network rinkeby scripts/deploy.ts",
     "deploy:mainnet": "hardhat run --network mainnet scripts/deploy.ts"
