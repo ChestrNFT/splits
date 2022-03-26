@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ProxyVault} from "@chestrnft/royalty-vault/contracts/ProxyVault.sol";
 import {SplitProxy} from "./SplitProxy.sol";
-
 import {IRoyaltyVault} from "@chestrnft/royalty-vault/interfaces/IRoyaltyVault.sol";
 import {ICoreCollection} from "../interfaces/ICoreCollection.sol";
 
@@ -21,18 +20,21 @@ contract SplitFactory is Ownable {
     address public splitAsset;
     address public royaltyAsset;
     address public splitterProxy;
+    uint256 public platformFee;
+    address public platformFeeRecipient;
 
     mapping(string => address) public splits;
-    mapping(bytes32 => address) public merkleRoots;
 
     /**** Events ****/
 
-    event SplitCreated(
-        address indexed splitter,
-        string splitId
-    );
+    event SplitCreated(address indexed splitter, string splitId);
 
-    event VaultCreated(address indexed vault, address indexed splitter);
+    event VaultCreated(
+        address indexed vault,
+        address indexed splitter,
+        uint256 platformFee,
+        address platformFeeRecipient
+    );
 
     event VaultAssignedToCollection(
         address indexed vault,
@@ -50,14 +52,6 @@ contract SplitFactory is Ownable {
         _;
     }
 
-    modifier onlyAvailableMerkleRoot(bytes32 _merkleRoot) {
-        require(
-            merkleRoots[_merkleRoot] == address(0),
-            "SplitFactory : Split already exists of this merkle hash."
-        );
-        _;
-    }
-
     /**
      * @dev Constructor
      * @param _splitter The address of the Splitter contract.
@@ -65,6 +59,8 @@ contract SplitFactory is Ownable {
     constructor(address _splitter, address _royaltyVault) {
         splitter = _splitter;
         royaltyVault = _royaltyVault;
+        platformFee = 500; // 5%
+        platformFeeRecipient = 0x0000000000000000000000000000000000000000;
     }
 
     /**
@@ -78,12 +74,11 @@ contract SplitFactory is Ownable {
         address _splitAsset,
         address _collectionContract,
         string memory _splitId
-    )
-        external
-        onlyAvailableSplit(_splitId)
-        onlyAvailableMerkleRoot(_merkleRoot)
-        returns (address splitProxy)
-    {
+    ) external onlyAvailableSplit(_splitId) returns (address splitProxy) {
+        require(
+            ICoreCollection(_collectionContract).owner() == msg.sender,
+            "Transaction sender is not collection owner"
+        );
         merkleRoot = _merkleRoot;
         splitAsset = _splitAsset;
         royaltyAsset = _splitAsset;
@@ -92,9 +87,6 @@ contract SplitFactory is Ownable {
         address vault = createVaultProxy(splitProxy);
 
         ICoreCollection(_collectionContract).setRoyaltyVault(vault);
-
-        merkleRoots[_merkleRoot] = splitProxy;
-
         emit VaultAssignedToCollection(vault, splitter, _collectionContract);
     }
 
@@ -107,7 +99,7 @@ contract SplitFactory is Ownable {
         bytes32 _merkleRoot,
         address _splitAsset,
         string memory _splitId
-    ) external returns (address splitProxy) {
+    ) external onlyAvailableSplit(_splitId) returns (address splitProxy) {
         merkleRoot = _merkleRoot;
         splitAsset = _splitAsset;
         royaltyAsset = _splitAsset;
@@ -145,7 +137,7 @@ contract SplitFactory is Ownable {
         );
         delete splitterProxy;
         delete royaltyAsset;
-        emit VaultCreated(vault, splitProxy);
+        emit VaultCreated(vault, splitProxy, platformFee, platformFeeRecipient);
     }
 
     /**
