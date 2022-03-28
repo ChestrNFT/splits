@@ -1,5 +1,5 @@
-import MerkleTree from "./merkle-tree";
-import { BigNumber, utils } from "ethers";
+import MerkleTree from './merkle-tree';
+import { BigNumber, utils } from 'ethers';
 
 export default class BalanceTree {
   private readonly tree: MerkleTree;
@@ -7,7 +7,7 @@ export default class BalanceTree {
     this.tree = new MerkleTree(
       balances.map(({ who, allocation }, index) => {
         return BalanceTree.toNode(who, allocation);
-      })
+      }),
     );
   }
 
@@ -15,7 +15,7 @@ export default class BalanceTree {
     who: string,
     allocation: BigNumber,
     proof: Buffer[],
-    root: Buffer
+    root: Buffer,
   ): boolean {
     let pair = BalanceTree.toNode(who, allocation);
     for (const item of proof) {
@@ -28,9 +28,9 @@ export default class BalanceTree {
   public static toNode(who: string, allocation: BigNumber): Buffer {
     return Buffer.from(
       utils
-        .solidityKeccak256(["address", "uint256"], [who, allocation])
+        .solidityKeccak256(['address', 'uint256'], [who, allocation])
         .substr(2),
-      "hex"
+      'hex',
     );
   }
 
