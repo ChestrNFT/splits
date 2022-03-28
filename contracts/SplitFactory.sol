@@ -60,7 +60,7 @@ contract SplitFactory is Ownable {
         splitter = _splitter;
         royaltyVault = _royaltyVault;
         platformFee = 500; // 5%
-        platformFeeRecipient = 0x0000000000000000000000000000000000000000;
+        platformFeeRecipient = 0x70388C130222eae55a0527a2367486bF5D12d6e7;
     }
 
     /**
